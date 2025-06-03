@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eclipse Airdrop Allocation Checker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+</head>
+<body>
+
+  <!-- Particles.js Background -->
+  <div id="particles-js"></div>
+
+  <!-- Container for all content, above background -->
+  <div class="container">
+    <h1>Eclipse Airdrop Allocation Checker</h1>
+
+    <form method="post" id="checkForm">
+      <label for="wallet">Enter your Eclipse wallet</label>
+      <input
+        type="text"
+        id="wallet"
+        name="wallet"
+        required
+        placeholder="Wallet address"
+        autocomplete="off"
+      />
+
+      <label for="x_handle">Enter your X (Twitter) handle</label>
+      <input
+        type="text"
+        id="x_handle"
+        name="x_handle"
+        placeholder="@yourhandle"
+        autocomplete="off"
+      />
+
+      <button type="submit">Check Allocation</button>
+    </form>
+
+    <!-- Loading Popup -->
+    <div id="loadingPopup" class="loading-popup">
+      <div class="loading-content">
+        <div class="loader"></div>
+        <h3>Checking activities...</h3>
+        <ul id="checking-criteria" class="criteria-list">
+          <li>Total NFT mints</li>
+          <li>ASC NFT holding</li>
+          <li>Total transactions</li>
+          <li>Contract interactions</li>
+          <li>Turbo tap</li>
+        </ul>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </div>
+    </div>
+
+    {% if allocation %}
+    <div class="result">
+      <p>🎉 <strong>Congratulations!</strong></p>
+      <p><strong>Wallet:</strong> <span style="word-break: break-all;">{{ wallet }}</span></p>
+      <p><strong>X Handle:</strong> @{{ x_handle }}</p>
+      <p><strong>Your Allocation:</strong> {{ allocation }} $ES</p>
+      <p><strong>Value:</strong> ${{ allocation }}</p>
+      {% if leaderboard %}
+        {% set sorted = leaderboard|sort(attribute='allocation', reverse=True) %}
+        {% set handles = sorted|map(attribute='x_handle')|list %}
+        {% set user_rank = handles.index(x_handle) + 1 if x_handle in handles else 'N/A' %}
+        <p><strong>Your Rank:</strong> #{{ user_rank }}</p>
+      {% else %}
+        <p><strong>Your Rank:</strong> N/A</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if leaderboard %}
+    <h2>🏆 Top Gainers</h2>
+    <table class="leaderboard">
+      <thead>
+        <tr>
+          <th>X Handle</th>
+          <th>Allocation ($ES)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in leaderboard %}
+        <tr {% if user.x_handle == x_handle %}class="highlight"{% endif %}>
+          <td>@{{ user.x_handle }}</td>
+          <td>{{ user.allocation }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <a href="https://x.com/abhipes32" target="_blank" class="twitter-follow">
+      <img src="{{ url_for('static', filename='images/twitter.svg') }}" alt="Twitter" /> Follow Me
+    </a>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/particles.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/particles-init.js') }}"></script>
+  <script>
+    const form = document.getElementById("checkForm");
+    const popup = document.getElementById("loadingPopup");
+    const criteriaItems = document.querySelectorAll("#checking-criteria li");
+    const progressBar = document.getElementById("progressBar");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      popup.classList.add("show");
+
+      let index = 0;
+      let progress = 0;
+      const total = criteriaItems.length;
+      criteriaItems.forEach(item => item.style.opacity = 0);
+
+      function showNext() {
+        if (index < total) {
+          criteriaItems[index].style.opacity = 1;
+          index++;
+          progress = (index / total) * 100;
+          progressBar.style.width = progress + "%";
+          setTimeout(showNext, 700);
+        } else {
+          setTimeout(() => {
+            form.submit();
+          }, 500);
+        }
+      }
+      showNext();
+    });
+  </script>
+
+</body>
+</html>
